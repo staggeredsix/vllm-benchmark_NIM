@@ -9,6 +9,11 @@ import random
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.getLogger("openai").setLevel(logging.WARNING)
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("requests").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+logging.getLogger("asyncio").setLevel(logging.WARNING)
 
 SHORT_PROMPTS = [
     "Explain the concept of artificial intelligence in simple terms.",
@@ -118,7 +123,7 @@ async def process_stream(stream):
             break
     return first_token_time, total_tokens
 
-async def make_request(client, output_tokens, request_timeout, use_long_context):
+async def make_request(client, output_tokens, request_timeout, use_long_context, model_name):
     start_time = time.time()
     if use_long_context:
         prompt_pair = random.choice(LONG_PROMPT_PAIRS)
@@ -128,7 +133,7 @@ async def make_request(client, output_tokens, request_timeout, use_long_context)
 
     try:
         stream = await client.chat.completions.create(
-            model="NousResearch/Meta-Llama-3.1-8B-Instruct",
+            model=model_name,
             messages=[
                 {"role": "user", "content": content}
             ],
@@ -150,30 +155,23 @@ async def make_request(client, output_tokens, request_timeout, use_long_context)
         logging.error(f"Error during request: {str(e)}")
         return None
 
-async def worker(client, semaphore, queue, results, output_tokens, request_timeout, use_long_context):
+async def worker(client, semaphore, queue, results, output_tokens, request_timeout, use_long_context, model_name):
     while True:
         async with semaphore:
             task_id = await queue.get()
             if task_id is None:
                 queue.task_done()
                 break
-            logging.info(f"Starting request {task_id}")
-            result = await make_request(client, output_tokens, request_timeout, use_long_context)
+            logging.info(f"Starting request {task_id} for model {model_name}")
+            result = await make_request(client, output_tokens, request_timeout, use_long_context, model_name)
             if result:
                 results.append(result)
             else:
-                logging.warning(f"Request {task_id} failed")
+                logging.warning(f"Request {task_id} for model {model_name} failed")
             queue.task_done()
-            logging.info(f"Finished request {task_id}")
+            logging.info(f"Finished request {task_id} for model {model_name}")
 
-def calculate_percentile(values, percentile, reverse=False):
-    if not values:
-        return None
-    if reverse:
-        return np.percentile(values, 100 - percentile)
-    return np.percentile(values, percentile)
-
-async def run_benchmark(num_requests, concurrency, request_timeout, output_tokens, vllm_url, api_key, use_long_context):
+async def run_benchmark(num_requests, concurrency, request_timeout, output_tokens, vllm_url, api_key, use_long_context, model_name):
     client = AsyncOpenAI(base_url=vllm_url, api_key=api_key)
     semaphore = asyncio.Semaphore(concurrency)
     queue = asyncio.Queue()
@@ -188,13 +186,24 @@ async def run_benchmark(num_requests, concurrency, request_timeout, output_token
         await queue.put(None)
 
     # Create worker tasks
-    workers = [asyncio.create_task(worker(client, semaphore, queue, results, output_tokens, request_timeout, use_long_context)) for _ in range(concurrency)]
+    workers = [asyncio.create_task(worker(client, semaphore, queue, results, output_tokens, request_timeout, use_long_context, model_name)) for _ in range(concurrency)]
 
     start_time = time.time()
-    
+
+    async def report_tps():
+        while not queue.empty():
+            await asyncio.sleep(10)
+            elapsed_time = time.time() - start_time
+            successful_requests = len(results)
+            avg_tps = successful_requests / elapsed_time if elapsed_time > 0 else 0
+            logging.info(f"Average TPS: {avg_tps:.2f} | Requests in flight: {queue.qsize()}")
+
+    tps_report_task = asyncio.create_task(report_tps())
+
     # Wait for all tasks to complete
     await queue.join()
     await asyncio.gather(*workers)
+    tps_report_task.cancel()  # Stop the TPS reporting task when done
 
     end_time = time.time()
 
@@ -246,6 +255,14 @@ async def run_benchmark(num_requests, concurrency, request_timeout, output_token
             "p99": ttft_percentiles[2]
         }
     }
+
+def calculate_percentile(values, percentile, reverse=False):
+    if not values:
+        return None
+    if reverse:
+        return np.percentile(values, 100 - percentile)
+    return np.percentile(values, percentile)
+
 
 def print_results(results):
     print(json.dumps(results, indent=2))
