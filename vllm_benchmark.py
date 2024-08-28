@@ -7,6 +7,8 @@ import argparse
 import json
 import random
 
+
+
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logging.getLogger("openai").setLevel(logging.WARNING)
@@ -14,6 +16,15 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 logging.getLogger("asyncio").setLevel(logging.WARNING)
+
+
+import json
+
+def write_results_to_file(results, filename="benchmark_results.json"):
+    with open(filename, 'w') as f:
+        json.dump(results, f, indent=2)
+    logging.info(f"Benchmark results saved to {filename}")
+
 
 SHORT_PROMPTS = [
     "Explain the concept of artificial intelligence in simple terms.",
@@ -189,21 +200,10 @@ async def run_benchmark(num_requests, concurrency, request_timeout, output_token
     workers = [asyncio.create_task(worker(client, semaphore, queue, results, output_tokens, request_timeout, use_long_context, model_name)) for _ in range(concurrency)]
 
     start_time = time.time()
-
-    async def report_tps():
-        while not queue.empty():
-            await asyncio.sleep(10)
-            elapsed_time = time.time() - start_time
-            successful_requests = len(results)
-            avg_tps = successful_requests / elapsed_time if elapsed_time > 0 else 0
-            logging.info(f"Average TPS: {avg_tps:.2f} | Requests in flight: {queue.qsize()}")
-
-    tps_report_task = asyncio.create_task(report_tps())
-
+    
     # Wait for all tasks to complete
     await queue.join()
     await asyncio.gather(*workers)
-    tps_report_task.cancel()  # Stop the TPS reporting task when done
 
     end_time = time.time()
 
@@ -226,7 +226,7 @@ async def run_benchmark(num_requests, concurrency, request_timeout, output_token
     tps_percentiles = [calculate_percentile(tokens_per_second_list, p, reverse=True) for p in percentiles]
     ttft_percentiles = [calculate_percentile(ttft_list, p) for p in percentiles]
     
-    return {
+    results_data = {
         "total_requests": num_requests,
         "successful_requests": successful_requests,
         "concurrency": concurrency,
@@ -255,6 +255,11 @@ async def run_benchmark(num_requests, concurrency, request_timeout, output_token
             "p99": ttft_percentiles[2]
         }
     }
+    
+    # Write the results to a file
+    write_results_to_file(results_data)
+
+    return results_data
 
 def calculate_percentile(values, percentile, reverse=False):
     if not values:
