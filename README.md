@@ -4,6 +4,7 @@ This repository contains scripts for benchmarking the performance of large langu
 
 ## Features
 
+- Added support for NIVDIA LLM NIMs
 - Benchmark LLMs with different concurrency levels
 - Measure key performance metrics:
   - Requests per second
@@ -82,3 +83,7 @@ Contributions to improve the benchmarking scripts or add new features are welcom
 ## License
 
 This project is licensed under the Apache 2.0 License - see the [LICENSE](LICENSE) file for details.
+
+## MY MODIFICATIONS
+
+This repo is for me to work on personal projects without breaking the original while allowing anyone to benefit from the work. Any modifications I create are freely available. I won't push any changes back to the original work as I don't trust myself to not break things.
