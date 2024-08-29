@@ -1,4 +1,4 @@
-# vLLM Benchmark
+# NVIDIA LLM NIM - vLLM Benchmark
 
 This repository, based on vLLM Benchmark, provides NVIDA LLM NIM users to run performance testing against NIMs. This will do everything vLLM Benchmark does. It NIM support has been bolted on. This repo is not affiliated with NVIDIA.
 
