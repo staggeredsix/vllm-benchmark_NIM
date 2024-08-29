@@ -6,6 +6,7 @@ This repository, based on vLLM Benchmark, provides NVIDA LLM NIM users an easy w
 
 - Added support for NIVDIA LLM NIMs
 - Benchmark NVIDIA LLM NIMs with different concurrency levels
+- Automatically hone in on maximum users per NIM deployment at the GPU level
 - Measure key performance metrics:
   - Requests per second
   - Latency
