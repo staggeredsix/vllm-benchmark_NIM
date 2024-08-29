@@ -24,7 +24,7 @@ This repository, based on vLLM Benchmark, provides NVIDA LLM NIM users to run pe
 
 1. Clone this repository:
    ```
-   git clone (https://github.com/staggeredsix/vllm-benchmark_NIM.git)
+   git clone (https://github.com/staggeredsix/vllm-benchmark_NIM.git
    cd vllm-benchmark
    ```
 
