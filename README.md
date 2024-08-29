@@ -1,6 +1,6 @@
 # vLLM Benchmark
 
-This repository contains scripts for benchmarking the performance of large language models (LLMs) served using vLLM. It's designed to test the scalability and performance of LLM deployments under various concurrency levels.
+This repository, based on vLLM Benchmark, provides NVIDA LLM NIM users to run performance testing against NIMs. This will do everything vLLM Benchmark does. It NIM support has been bolted on. This repo is not affiliated with NVIDIA.
 
 ## Features
 
@@ -24,7 +24,7 @@ This repository contains scripts for benchmarking the performance of large langu
 
 1. Clone this repository:
    ```
-   git clone https://github.com/yourusername/vllm-benchmark.git
+   git clone (https://github.com/staggeredsix/vllm-benchmark_NIM.git)
    cd vllm-benchmark
    ```
 
@@ -34,12 +34,12 @@ This repository contains scripts for benchmarking the performance of large langu
    ```
 
 ## Usage
-   sh ./nim-vllm-benchmark.py
-   Select the test to run.
-   The model will load, script will detect the correct model name for requests.
-   Built in fun bug will have you select test again.
-   Manual test will allow setting requests and concurrency.
-   Auto Test will start with a medium load and adjust the load until returned tokens per second drops below 12.
+   ```sh ./nim-vllm-benchmark.py```
+Select the test to run.
+The model will load, script will detect the correct model name for requests.
+Built in fun bug will have you select test again.
+Manual test will allow setting requests and concurrency.
+Auto Test will start with a medium load and adjust the load until returned tokens per second drops below 12.
 
 
 
