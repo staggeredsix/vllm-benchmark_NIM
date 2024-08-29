@@ -5,7 +5,7 @@ This repository contains scripts for benchmarking the performance of large langu
 ## Features
 
 - Added support for NIVDIA LLM NIMs
-- Benchmark LLMs with different concurrency levels
+- Benchmark NVIDIA LLM NIMs with different concurrency levels
 - Measure key performance metrics:
   - Requests per second
   - Latency
@@ -34,34 +34,24 @@ This repository contains scripts for benchmarking the performance of large langu
    ```
 
 ## Usage
+   sh ./nim-vllm-benchmark.py
+   Select the test to run.
+   The model will load, script will detect the correct model name for requests.
+   Built in fun bug will have you select test again.
+   Manual test will allow setting requests and concurrency.
+   Auto Test will start with a medium load and adjust the load until returned tokens per second drops below 12.
 
-### Single Benchmark Run
 
-To run a single benchmark:
-
-```
-python vllm_benchmark.py --num_requests 100 --concurrency 10 --output_tokens 100 --vllm_url "http://localhost:8000/v1" --api_key "your-api-key"
-```
-
-Parameters:
-- `num_requests`: Total number of requests to make
-- `concurrency`: Number of concurrent requests
-- `output_tokens`: Number of tokens to generate per request
-- `vllm_url`: URL of the vLLM server
-- `api_key`: API key for the vLLM server
-- `request_timeout`: (Optional) Timeout for each request in seconds (default: 30)
-
-### Multiple Benchmark Runs
-
-To run multiple benchmarks with different concurrency levels:
-
-```
-python run_benchmarks.py --vllm_url "http://localhost:8000/v1" --api_key "your-api-key"
-```
-
-This script will run benchmarks with concurrency levels of 1, 10, 50, and 100, and save the results to `benchmark_results.json`.
 
 ## Output
+The benchmark will report the current in-flight requests, current average TPS every 10 seconds.
+After the benchmark ends it will report total concurrent requests and TPS.
+
+Auto Test will hammer the model with requests and update you every 10 seconds with in-flight requests and TPS.
+After the Auto Test detects a drop to or below 12 TPS return rate it will end the test and report maximum concurrent requests.
+Rerun a few times for confirmation.
+
+A800 LLama 3 8B Instruct was around 313 concurrent requests. Running 5 times with no specific cool down for GPU temps.
 
 The benchmark results are saved in JSON format, containing detailed metrics for each run, including:
 
@@ -74,7 +64,7 @@ The benchmark results are saved in JSON format, containing detailed metrics for 
 
 ## Results
 
-Please see the results directory for benchmarks on [Backprop](https://backprop.co) instances.
+Results are dumped into the same directory as the nim-vllm-benchmark.py.
 
 ## Contributing
 
@@ -87,3 +77,7 @@ This project is licensed under the Apache 2.0 License - see the [LICENSE](LICENS
 ## MY MODIFICATIONS
 
 This repo is for me to work on personal projects without breaking the original while allowing anyone to benefit from the work. Any modifications I create are freely available. I won't push any changes back to the original work as I don't trust myself to not break things.
+
+## PENDING ENHANCEMENTS
+
+Naming the run for logging, moving logging to results directory. Overall bug squashing. Benchmark chart creation.
